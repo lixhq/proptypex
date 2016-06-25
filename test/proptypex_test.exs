@@ -108,7 +108,10 @@ defmodule PropTypexTest do
   end
 
   test "list_of gives proper error-messages when composed" do
-    schema = %{ list_of_complextype: PropTypes.list_of(PropTypes.one_of(["hello", 123])) }
+    schema = %{ list_of_complextype: PropTypes.list_of(PropTypes.one_of(["hello", 123]), :required) }
+
+    {:error, _} = PropTypex.verify(schema, %{})
+
     {:ok, _} = PropTypex.verify(schema, %{ list_of_complextype: ["hello", 123] })
     {:error, reason} = PropTypex.verify(schema, %{ list_of_complextype: ["hello", :lol] })
     assert reason =~ ~r/list_of\(one_of\(/
@@ -141,17 +144,20 @@ defmodule PropTypexTest do
     schema = %{ map_of_prop: PropTypes.map_of(%{
         map_of_prop: PropTypes.map_of(%{ string_prop: PropTypes.string }),
         bool_prop: PropTypes.boolean
-      })
+      }, :required)
     }
     {:ok, _ } = PropTypex.verify(schema, %{ map_of_prop: %{ map_of_prop: %{} } })
     {:ok, _ } = PropTypex.verify(schema, %{ map_of_prop: %{ map_of_prop: %{ string_prop: "" } } })
     {:ok, _ } = PropTypex.verify(schema, %{ map_of_prop: %{ map_of_prop: %{ string_prop: "" }, bool_prop: true } })
     {:error, _ } = PropTypex.verify(schema, %{ map_of_prop: %{ map_of_prop: %{ string_prop: "" }, bool_prop: "" } })
     {:error, _ } = PropTypex.verify(schema, %{ map_of_prop: %{ map_of_prop: %{ string_prop: [] }, bool_prop: true } })
+    {:error, _ } = PropTypex.verify(schema, %{ })
   end
+
 
   test "verify! throws on error" do
     schema = %{ string_prop: PropTypes.string }
     assert_raise PropTypex.ValidationError, fn -> PropTypex.verify!(schema, %{ string_prop: 123 }) end
   end
+
 end

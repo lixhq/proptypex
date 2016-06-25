@@ -74,7 +74,8 @@ defmodule PropTypex.PropTypes do
   end
 
   def list_of(prop_descriptor, required \\ false) do
-    [type: prop_type, required: required, prop_validator: prop_validator] = prop_descriptor
+    prop_type = prop_descriptor[:type]
+    prop_validator = prop_descriptor[:prop_validator]
     create_validator("list_of(#{prop_type})", required, fn
       values when is_list(values) ->
         res = Enum.all?(values, fn (v) -> prop_validator.(v) == true end)
