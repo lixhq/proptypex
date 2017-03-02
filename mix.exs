@@ -4,18 +4,18 @@ defmodule PropTypex.Mixfile do
   def project do
     [
       app: :proptypex,
-      version: "0.0.1",
-      elixir: "~> 1.2",
+      version: "0.0.2",
+      elixir: "~> 1.4",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
-      deps: deps,
+      deps: deps(),
       description: "PropTypex is a small library for validating data in maps, inspired by Reacts PropTypes",
-      package: package
+      package: package()
     ]
   end
 
   def application do
-    [applications: []]
+    []
   end
 
   defp package do
@@ -29,6 +29,6 @@ defmodule PropTypex.Mixfile do
   end
 
   defp deps do
-    [{:mix_test_watch, "~> 0.2", only: :dev}]
+    [{:mix_test_watch, "~> 0.3", only: :test}]
   end
 end
