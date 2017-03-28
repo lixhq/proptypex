@@ -1,55 +1,56 @@
 defmodule PropTypex.PropTypes do
+  @default_required_value false
 
-  def atom(required \\ false) do
+  def atom(required \\ @default_required_value) do
     create_validator(:atom, required, fn
       v when is_atom(v) -> true
       _ -> false
     end)
   end
 
-  def string(required \\ false) do
+  def string(required \\ @default_required_value) do
     create_validator(:string, required, fn
       v when is_binary(v) -> true
       _ -> false
     end)
   end
 
-  def number(required \\ false) do
+  def number(required \\ @default_required_value) do
     create_validator(:number, required, fn
       v when is_number(v) -> true
       _ -> false
     end)
   end
 
-  def float(required \\ false) do
+  def float(required \\ @default_required_value) do
     create_validator(:float, required, fn
       v when is_float(v) -> true
       _ -> false
     end)
   end
 
-  def integer(required \\ false) do
+  def integer(required \\ @default_required_value) do
     create_validator(:integer, required, fn
       v when is_integer(v) -> true
       _ -> false
     end)
   end
 
-  def boolean(required \\ false) do
+  def boolean(required \\ @default_required_value) do
     create_validator(:boolean, required, fn
       v when is_boolean(v) -> true
       _ -> false
     end)
   end
 
-  def map(required \\ false) do
+  def map(required \\ @default_required_value) do
     create_validator(:map, required, fn
       v when is_map(v) -> true
       _ -> false
     end)
   end
 
-  def map_of(prop_descriptions, required \\ false) do
+  def map_of(prop_descriptions, required \\ @default_required_value) do
     type_description = "%{ #{prop_descriptions |> Enum.map(fn { k, prop_descriptor } -> "#{k} => #{Keyword.fetch!(prop_descriptor, :type)}" end) |> Enum.join(", ")} }"
 
     create_validator("map_of(#{type_description})", required, fn
@@ -61,14 +62,14 @@ defmodule PropTypex.PropTypes do
     end)
   end
 
-  def list(required \\ false) do
+  def list(required \\ @default_required_value) do
     create_validator(:list, required, fn
       v when is_list(v) -> true
       _ -> false
     end)
   end
 
-  def list_of(prop_descriptor, required \\ false) do
+  def list_of(prop_descriptor, required \\ @default_required_value) do
     prop_type = prop_descriptor[:type]
     prop_validator = prop_descriptor[:prop_validator]
     create_validator("list_of(#{prop_type})", required, fn
@@ -78,7 +79,7 @@ defmodule PropTypex.PropTypes do
     end)
   end
 
-  def one_of(valid_values, required \\ false) do
+  def one_of(valid_values, required \\ @default_required_value) do
     strict_values = Enum.reject(valid_values, &is_validator/1)
     complex_values = Enum.filter(valid_values, &is_validator/1)
     create_validator(
@@ -86,7 +87,7 @@ defmodule PropTypex.PropTypes do
   required, fn value -> value in strict_values or Enum.any?(complex_values, &Keyword.fetch!(&1, :prop_validator).(value)) end)
   end
 
-  def pred(p, required \\ false, description \\ nil) do
+  def pred(p, required \\ @default_required_value, description \\ nil) do
     create_validator(description || "predicate was false", required, &p.(&1))
   end
 
