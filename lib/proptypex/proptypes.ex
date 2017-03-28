@@ -49,13 +49,8 @@ defmodule PropTypex.PropTypes do
     end)
   end
 
-  def type_from_prop_descriptor(prop_descriptor) do
-    [type: type, required: required, prop_validator: validator] = prop_descriptor
-    type
-  end
-
   def map_of(prop_descriptions, required \\ false) do
-    type_description = "%{ #{prop_descriptions |> Enum.map(fn { k, prop_descriptor } -> "#{k} => #{type_from_prop_descriptor(prop_descriptor)}" end) |> Enum.join(", ")} }"
+    type_description = "%{ #{prop_descriptions |> Enum.map(fn { k, prop_descriptor } -> "#{k} => #{Keyword.fetch!(prop_descriptor, :type)}" end) |> Enum.join(", ")} }"
 
     create_validator("map_of(#{type_description})", required, fn
       v ->
@@ -84,14 +79,26 @@ defmodule PropTypex.PropTypes do
   end
 
   def one_of(valid_values, required \\ false) do
+    strict_values = Enum.reject(valid_values, &is_validator/1)
+    complex_values = Enum.filter(valid_values, &is_validator/1)
     create_validator(
-    "one_of(#{Enum.map(valid_values, &inspect/1) |> Enum.join(", ")})})",
-  required, fn value -> value in valid_values end)
+    "one_of(#{Enum.map(strict_values ++ Enum.map(complex_values, &Keyword.fetch!(&1, :type)), &inspect/1) |> Enum.join(", ")})})",
+  required, fn value -> value in strict_values or Enum.any?(complex_values, &Keyword.fetch!(&1, :prop_validator).(value)) end)
+  end
+
+  def pred(p, required \\ false, description \\ nil) do
+    create_validator(description || "predicate was false", required, &p.(&1))
   end
 
   defp create_validator(type, required, validator) do
     [type: type, required: required, prop_validator: validator]
   end
+
+  defp is_validator(v) when is_list(v) do
+    Keyword.has_key?(v, :prop_validator) and Keyword.has_key?(v, :type) and Keyword.has_key?(v, :required)
+  end
+
+  defp is_validator(_), do: false
 end
 
 

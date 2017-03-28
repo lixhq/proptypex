@@ -131,6 +131,13 @@ defmodule PropTypexTest do
     assert reason =~ ~r/atom/
   end
 
+  test "one_of composes" do
+    schema = %{ one_of_prop: PropTypes.one_of(["hello", PropTypes.number]) }
+    {:ok, _} = PropTypex.verify(schema, %{ one_of_prop: "hello" })
+    {:ok, _} = PropTypex.verify(schema, %{ one_of_prop: 789 })
+    {:error, _} = PropTypex.verify(schema, %{ one_of_prop: :atom })
+  end
+
   test "map_of value can be empty" do
     schema = %{ map_of_prop: PropTypes.map_of(%{
         map_of_prop: PropTypes.map_of(%{ string_prop: PropTypes.string }),
@@ -154,6 +161,18 @@ defmodule PropTypexTest do
     {:error, _ } = PropTypex.verify(schema, %{ })
   end
 
+  test "pred validates correctly" do
+    schema = %{ pred_prop: PropTypes.pred(&(:valid == &1)) }
+    {:ok, _ } = PropTypex.verify(schema, %{ pred_prop: :valid })
+    {:error, error } = PropTypex.verify(schema, %{ pred_prop: :invalid })
+    assert error =~ "predicate was false"
+  end
+
+  test "pred can have custom error description" do
+    schema = %{ pred_prop: PropTypes.pred(&(:valid == &1), false, "my error description") }
+    {:error, error } = PropTypex.verify(schema, %{ pred_prop: :invalid })
+    assert error =~ "my error description"
+  end
 
   test "verify! throws on error" do
     schema = %{ string_prop: PropTypes.string }
