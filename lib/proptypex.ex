@@ -10,7 +10,15 @@ defmodule PropTypex do
 
 
   def run_verification(prop_descriptions, data) do
-    Enum.reduce(prop_descriptions, {[], data}, fn {k, [type: prop_type, required: required, prop_validator: prop_validator]}, acc = {errors, data} ->
+    Enum.reduce(prop_descriptions, {[], data}, fn
+      {k, expected_value}, acc = {errors, data } when is_binary(expected_value) or is_number(expected_value) ->
+        value = Map.get(data, k, :missing_prop_value)
+        cond do
+          value == :missing_prop_value -> { [{:missing, k, expected_value} | errors], data }
+          value == expected_value -> acc
+          true -> {[{:invalid, k, expected_value, value} | errors], data}
+        end
+      {k, [type: prop_type, required: required, prop_validator: prop_validator]}, acc = {errors, data} ->
       value = Map.get(data, k, :missing_prop_value)
       cond do
         value == :missing_prop_value and required -> { [{:missing, k, prop_type} | errors], data }

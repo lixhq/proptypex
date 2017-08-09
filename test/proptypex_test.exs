@@ -179,4 +179,28 @@ defmodule PropTypexTest do
     assert_raise PropTypex.ValidationError, fn -> PropTypex.verify!(schema, %{ string_prop: 123 }) end
   end
 
+  test "primitive exact value" do
+    schema = %{ exact_prop: "my_string" }
+    assert {:ok, _ } = PropTypex.verify(schema, %{ exact_prop: "my_string" })
+    assert {:error, _ } = PropTypex.verify(schema, %{ exact_prop: "your_string" })
+
+    schema = %{ exact_prop: 12345 }
+    assert {:ok, _ } = PropTypex.verify(schema, %{ exact_prop: 12345 })
+    assert {:error, _ } = PropTypex.verify(schema, %{ exact_prop: 123 })
+  end
+
+  test "map_of works with exact values" do
+    schema = %{
+      signed_up_by: PropTypes.one_of([
+        PropTypes.map_of(%{ type: "email", email: PropTypes.string(:required) }),
+        PropTypes.map_of(%{ type: "facebook", facebook_user_id: PropTypes.integer(:required), email: PropTypes.string(:required) })
+      ], :required)
+    }
+
+    assert {:ok, _ } = PropTypex.verify(schema, %{ signed_up_by: %{ type: "email", email: "my@email.com" } })
+    assert {:ok, _ } = PropTypex.verify(schema, %{ signed_up_by: %{ type: "facebook", email: "my@email.com", facebook_user_id: 12345 } })
+    assert {:error, _ } = PropTypex.verify(schema, %{ signed_up_by: %{ type: "email", email: 12345 } })
+    assert {:error, _ } = PropTypex.verify(schema, %{ signed_up_by: %{ email: "my@email.com" } })
+  end
+
 end

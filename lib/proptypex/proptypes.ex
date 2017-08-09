@@ -51,7 +51,12 @@ defmodule PropTypex.PropTypes do
   end
 
   def map_of(prop_descriptions, required \\ @default_required_value) do
-    type_description = "%{ #{prop_descriptions |> Enum.map(fn { k, prop_descriptor } -> "#{k} => #{Keyword.fetch!(prop_descriptor, :type)}" end) |> Enum.join(", ")} }"
+    type_description = "%{
+    #{prop_descriptions |> Enum.map(
+      fn { k, prop_descriptor } when is_binary(prop_descriptor) -> "#{k} => #{prop_descriptor}"
+         { k, prop_descriptor } -> "#{k} => #{Keyword.fetch!(prop_descriptor, :type)}"
+      end) |> Enum.join(", ")}
+      }"
 
     create_validator("map_of(#{type_description})", required, fn
       v ->
